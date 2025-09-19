@@ -35,6 +35,16 @@ struct AllExpenseShortcuts: AppShortcutsProvider {
           "Log entertainment expense",
           "Add utilities expense",
           "Log utilities expense",
+          "Add healthcare expense",
+          "Log healthcare expense",
+          "Add education expense",
+          "Log education expense",
+          "Add travel expense",
+          "Log travel expense",
+          "Add personal expense",
+          "Log personal expense",
+          "Add business expense",
+          "Log business expense",
           
           // Combined examples
           "Add $15 food expense",
@@ -42,12 +52,22 @@ struct AllExpenseShortcuts: AppShortcutsProvider {
           "Spend $25 on shopping",
           "Spent $30 on entertainment",
           "Add 12 dollar utilities expense",
+          "Add $45 healthcare expense",
+          "Log $150 education expense",
+          "Spend $200 on travel",
+          "Spent $35 on personal",
+          "Add $75 business expense",
           
           // Natural language patterns
           "I spent $40 on food",
           "Just bought transport for $15",
           "Paid $25 for shopping",
-          "Expense of $30 in entertainment"
+          "Expense of $30 in entertainment",
+          "Spent $100 on healthcare",
+          "Paid $200 for education",
+          "Travel expense of $300",
+          "Personal expense $50",
+          "Business expense $75",
         ],
         shortTitle: "Add Expense",
         systemImageName: "plus.circle.fill"
