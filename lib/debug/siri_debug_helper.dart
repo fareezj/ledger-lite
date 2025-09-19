@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 
 class SiriDebugHelper {
-  static const platform = MethodChannel('com.wolf.ledgerlit/shortcut');
+  static const platform = MethodChannel('com.wolf.ledgerlite/shortcut');
 
   static Future<void> testSiriStorage() async {
     try {

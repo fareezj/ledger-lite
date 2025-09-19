@@ -9,7 +9,7 @@ final pendingExpenseServiceProvider = Provider<PendingExpenseService>((ref) {
 
 class PendingExpenseService {
   final ExpenseDao expenseDao;
-  static const platform = MethodChannel('com.wolf.ledgerlit/shortcut');
+  static const platform = MethodChannel('com.wolf.ledgerlite/shortcut');
 
   PendingExpenseService(this.expenseDao);
 

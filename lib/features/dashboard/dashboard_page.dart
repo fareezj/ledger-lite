@@ -30,6 +30,9 @@ class DashboardPageState extends ConsumerState<DashboardPage>
     _globalRef = ref;
     WidgetsBinding.instance.addObserver(this);
 
+    // Set up Siri shortcut listener
+    setupShortcutListener();
+
     // Load expenses when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(dashboardNotifierProvider.notifier).loadExpenses();
@@ -158,25 +161,9 @@ class DashboardPageState extends ConsumerState<DashboardPage>
     }
   }
 
-  Future<void> _testShortcutMethod() async {
-    try {
-      // Test the method channel directly
-      await PendingExpenseService.platform.invokeMethod('addShortcutExpense', {
-        'amount': 99.99,
-        'category': 'Test Method Channel',
-        'note': 'Direct test from Flutter',
-      });
-
-      // Then sync it
-      await _syncPendingExpenses();
-    } catch (e) {
-      print('Test method error: $e');
-    }
-  }
-
   Future<void> _testSiriConnection() async {
     try {
-      const platform = MethodChannel('com.wolf.ledgerlit/shortcut');
+      const platform = MethodChannel('com.wolf.ledgerlite/shortcut');
 
       // Test writing a dummy expense
       await platform.invokeMethod('testWrite');
@@ -219,7 +206,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'ledgerlite - Shortcut Test',
+                'LedgerLite - Shortcut Test',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
@@ -444,13 +431,13 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 }
 
 void setupShortcutListener() {
-  const platform = MethodChannel('com.wolf.ledgerlit/shortcut');
+  const platform = MethodChannel('com.wolf.ledgerlite/shortcut');
 
   platform.setMethodCallHandler((call) async {
     try {
       if (call.method == 'logExpense') {
         final args = Map<String, dynamic>.from(call.arguments);
-        final amount = args['amount'] as double;
+        final amount = double.parse(args['amount'] as String);
         final category = args['category'] as String;
         final note = args['note'] as String;
 
