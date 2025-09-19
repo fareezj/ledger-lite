@@ -6,7 +6,7 @@ import 'package:liteledger/features/dashboard/dashboard_provider.dart';
 import 'package:liteledger/services/pending_expense_service.dart';
 
 // Method channel for URL scheme handling
-const platform = MethodChannel('com.wolf.liteledger/url_handler');
+const platform = MethodChannel('com.wolf.ledgerlit/url_handler');
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -176,7 +176,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
   Future<void> _testSiriConnection() async {
     try {
-      const platform = MethodChannel('com.wolf.liteledger/shortcut');
+      const platform = MethodChannel('com.wolf.ledgerlit/shortcut');
 
       // Test writing a dummy expense
       await platform.invokeMethod('testWrite');
@@ -444,7 +444,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 }
 
 void setupShortcutListener() {
-  const platform = MethodChannel('com.wolf.liteledger/shortcut');
+  const platform = MethodChannel('com.wolf.ledgerlit/shortcut');
 
   platform.setMethodCallHandler((call) async {
     try {
