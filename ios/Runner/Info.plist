@@ -24,6 +24,19 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.wolf.ledgerlite</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>ledgerlite</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSSiriUsageDescription</key>
@@ -46,6 +59,19 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>NSAppIntents</key>
+	<array>
+		<dict>
+			<key>INIntentClassName</key>
+			<string>SimpleExpenseIntent</string>
+			<key>INIntentName</key>
+			<string>AddExpense</string>
+			<key>INIntentSupportedClasses</key>
+			<array>
+				<string>SimpleExpenseIntent</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

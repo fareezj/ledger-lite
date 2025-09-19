@@ -31,7 +31,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
     WidgetsBinding.instance.addObserver(this);
 
     // Set up Siri shortcut listener
-    setupShortcutListener();
+    // initializeSiriShortcutListener(); // Now handled in main.dart
 
     // Load expenses when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -43,26 +43,9 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
   // Check if app was launched with URL scheme to add expense
   void _handleInitialUrl() async {
-    const platform = MethodChannel('ledgerlite/url');
-    try {
-      final String? url = await platform.invokeMethod('getInitialUrl');
-      if (url != null && url.contains('addexpense')) {
-        // Parse URL parameters
-        final uri = Uri.parse(url);
-        final amount = uri.queryParameters['amount'];
-        final category = uri.queryParameters['category'];
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showAddExpenseDialog(
-            context,
-            prefilledAmount: amount,
-            prefilledCategory: category,
-          );
-        });
-      }
-    } catch (e) {
-      print('Error handling initial URL: $e');
-    }
+    // For now, just sync any pending expenses from Siri
+    // The URL scheme approach was replaced with UserDefaults for reliability
+    print('Dashboard: Checking for pending Siri expenses on app launch');
   }
 
   // Check for expenses added via Siri
@@ -428,50 +411,4 @@ class DashboardPageState extends ConsumerState<DashboardPage>
       print('Error in updateShortcutData: $e');
     }
   }
-}
-
-void setupShortcutListener() {
-  const platform = MethodChannel('com.wolf.ledgerlite/shortcut');
-
-  platform.setMethodCallHandler((call) async {
-    try {
-      if (call.method == 'logExpense') {
-        final args = Map<String, dynamic>.from(call.arguments);
-        final amount = double.parse(args['amount'] as String);
-        final category = args['category'] as String;
-        final note = args['note'] as String;
-
-        // Display in UI for testing
-        final timestamp = DateTime.now().toString().substring(0, 19);
-        final displayData =
-            '''
-        🎤 Siri Shortcut Received at $timestamp:
-        💰 Amount: \$${amount.toStringAsFixed(2)}
-        📂 Category: $category
-        📝 Note: ${note.isEmpty ? '(empty)' : note}
-      ''';
-
-        DashboardPageState.updateShortcutData(
-          displayData,
-          ExpenseModel(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
-            category: category,
-            amount: amount.toString(),
-            date: DateTime.now().toIso8601String(),
-          ),
-        );
-
-        print('Shortcut data: $amount $category $note');
-
-        // Return success to iOS
-        return 'success';
-      }
-    } catch (e) {
-      print('Error in shortcut listener: $e');
-      // Return error to iOS but don't crash
-      return 'error: $e';
-    }
-
-    return null;
-  });
 }

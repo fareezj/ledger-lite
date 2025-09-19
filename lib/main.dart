@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerlite/db/app_database.dart';
 import 'package:ledgerlite/features/dashboard/dashboard_page.dart';
 import 'package:ledgerlite/services/pending_expense_service.dart';
+import 'package:ledgerlite/services/siri_shortcut_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,8 +14,8 @@ Future<void> initializeApp(WidgetRef ref) async {
   // Initialize database
   await AppDatabase().initDatabase();
 
-  // Disable shortcut listener to prevent crashes
-  // setupShortcutListener();
+  // Set up Siri shortcut listener
+  initializeSiriShortcutListener();
 
   // Sync any pending expenses from Siri shortcuts
   final pendingService = ref.read(pendingExpenseServiceProvider);
