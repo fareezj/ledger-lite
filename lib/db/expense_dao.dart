@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liteledger/db/app_database.dart';
-import 'package:liteledger/models/expense_model.dart';
+import 'package:ledgerlite/db/app_database.dart';
+import 'package:ledgerlite/models/expense_model.dart';
 
 final expenseDaoProvider = Provider<ExpenseDao>((ref) {
   return ExpenseDao(ref.watch(databaseProvider));

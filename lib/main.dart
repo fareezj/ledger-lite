@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liteledger/db/app_database.dart';
-import 'package:liteledger/features/dashboard/dashboard_page.dart';
-import 'package:liteledger/services/pending_expense_service.dart';
+import 'package:ledgerlite/db/app_database.dart';
+import 'package:ledgerlite/features/dashboard/dashboard_page.dart';
+import 'package:ledgerlite/services/pending_expense_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,7 +55,7 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LiteLedger',
+      title: 'ledgerlite',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
@@ -68,7 +68,7 @@ class _MyAppState extends ConsumerState<MyApp> {
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 16),
-                    Text('Initializing LiteLedger...'),
+                    Text('Initializing ledgerlite...'),
                     SizedBox(height: 8),
                     Text(
                       'Syncing Siri shortcut expenses',

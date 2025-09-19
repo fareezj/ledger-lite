@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liteledger/db/expense_dao.dart';
-import 'package:liteledger/models/expense_model.dart';
+import 'package:ledgerlite/db/expense_dao.dart';
+import 'package:ledgerlite/models/expense_model.dart';
 
 final pendingExpenseServiceProvider = Provider<PendingExpenseService>((ref) {
   return PendingExpenseService(ref.watch(expenseDaoProvider));

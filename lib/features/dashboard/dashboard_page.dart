@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liteledger/models/expense_model.dart';
-import 'package:liteledger/features/dashboard/dashboard_provider.dart';
-import 'package:liteledger/services/pending_expense_service.dart';
+import 'package:ledgerlite/models/expense_model.dart';
+import 'package:ledgerlite/features/dashboard/dashboard_provider.dart';
+import 'package:ledgerlite/services/pending_expense_service.dart';
 
 // Method channel for URL scheme handling
 const platform = MethodChannel('com.wolf.ledgerlit/url_handler');
@@ -40,7 +40,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
   // Check if app was launched with URL scheme to add expense
   void _handleInitialUrl() async {
-    const platform = MethodChannel('liteledger/url');
+    const platform = MethodChannel('ledgerlite/url');
     try {
       final String? url = await platform.invokeMethod('getInitialUrl');
       if (url != null && url.contains('addexpense')) {
@@ -64,7 +64,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
   // Check for expenses added via Siri
   void _syncSiriExpenses() async {
-    const platform = MethodChannel('liteledger/siri');
+    const platform = MethodChannel('ledgerlite/siri');
     try {
       final List<dynamic>? siriExpenses = await platform.invokeMethod(
         'getSiriExpenses',
@@ -219,7 +219,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Liteledger - Shortcut Test',
+                'ledgerlite - Shortcut Test',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liteledger/db/expense_dao.dart';
-import 'package:liteledger/models/expense_model.dart';
+import 'package:ledgerlite/db/expense_dao.dart';
+import 'package:ledgerlite/models/expense_model.dart';
 
 class DashboardPageState {
   final bool isLoading;
