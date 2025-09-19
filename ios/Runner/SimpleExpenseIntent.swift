@@ -58,15 +58,13 @@ struct SimpleExpenseIntent: AppIntent {
   // Intent parameters
   @Parameter(
     title: "Amount", 
-    description: "The expense amount (e.g., 25.50)", 
-    default: 5.0
+    description: "The expense amount (e.g., 25.50)"
   )
   var amount: Double
 
   @Parameter(
     title: "Category", 
-    description: "Choose the expense category", 
-    default: .other,
+    description: "Choose the expense category",
     requestValueDialog: IntentDialog("What category is this expense for?")
   )
   var category: ExpenseCategory
