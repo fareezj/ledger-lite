@@ -17,7 +17,7 @@ import UIKit
     }
     
     let methodChannel = FlutterMethodChannel(
-      name: "com.wolf.ledgerlite/shortcut",
+      name: "ledgerlite/siri",
       binaryMessenger: controller.binaryMessenger
     )
     
@@ -49,7 +49,7 @@ import UIKit
         } else {
           result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid expense data", details: nil))
         }
-      case "getShortcutExpenses", "getPendingExpenses", "getUrlExpenses", "getSimpleExpenses":
+      case "getSiriExpenses", "getShortcutExpenses", "getPendingExpenses", "getUrlExpenses", "getSimpleExpenses":
         let pendingExpenses = UserDefaults.standard.array(forKey: "pendingSiriExpenses") as? [[String: Any]] ?? []
         result(pendingExpenses)
       case "clearShortcutExpenses", "clearPendingExpenses", "clearUrlExpenses", "clearSimpleExpenses", "clearSiriExpenses":
@@ -89,16 +89,47 @@ import UIKit
   // Handle URL schemes
   override func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
     print("AppDelegate: Received URL: \(url)")
-    
-    // Handle Siri expense URLs
+
+    // Handle Siri expense URLs with parameters
     if url.scheme == "ledgerlite" && url.host == "add-expense" {
       print("AppDelegate: Handling Siri expense URL")
-      
+
+      // Parse URL parameters
+      let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)
+      var amount: Double = 5.0
+      var category: String = "other"
+
+      if let queryItems = urlComponents?.queryItems {
+        for item in queryItems {
+          if item.name == "amount", let amountString = item.value, let parsedAmount = Double(amountString) {
+            amount = parsedAmount
+            print("AppDelegate: Parsed amount from URL: \(amount)")
+          } else if item.name == "category", let categoryValue = item.value {
+            category = categoryValue
+            print("AppDelegate: Parsed category from URL: \(category)")
+          }
+        }
+      }
+
+      // Store expense data in UserDefaults with parsed parameters
+      let expenseData: [String: Any] = [
+        "amount": String(format: "%.2f", amount),
+        "category": category,
+        "note": "Added via Siri URL",
+        "timestamp": Date().timeIntervalSince1970,
+        "id": UUID().uuidString
+      ]
+
+      var pendingExpenses = UserDefaults.standard.array(forKey: "pendingSiriExpenses") as? [[String: Any]] ?? []
+      pendingExpenses.append(expenseData)
+      UserDefaults.standard.set(pendingExpenses, forKey: "pendingSiriExpenses")
+
+      print("AppDelegate: Stored expense from URL: \(expenseData)")
+
       // The Flutter app will handle this via uni_links
-      // Just return true to indicate we handled the URL
       return true
     }
-    
+
     return super.application(app, open: url, options: options)
   }
   

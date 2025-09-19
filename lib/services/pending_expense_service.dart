@@ -9,7 +9,7 @@ final pendingExpenseServiceProvider = Provider<PendingExpenseService>((ref) {
 
 class PendingExpenseService {
   final ExpenseDao expenseDao;
-  static const platform = MethodChannel('com.wolf.ledgerlite/shortcut');
+  static const platform = MethodChannel('ledgerlite/siri');
 
   PendingExpenseService(this.expenseDao);
 
@@ -18,7 +18,7 @@ class PendingExpenseService {
     try {
       // Try shortcut helper method first (most stable)
       final List<dynamic>? shortcutExpensesRaw = await platform.invokeMethod(
-        'getShortcutExpenses',
+        'getSiriExpenses',
       );
 
       if (shortcutExpensesRaw != null && shortcutExpensesRaw.isNotEmpty) {

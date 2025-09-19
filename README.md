@@ -31,17 +31,37 @@ Ledger Lite features advanced Siri integration that allows you to add expenses u
 
 ### Voice Commands
 
-Try these Siri commands to add expenses:
+Try these Siri commands to add expenses with custom amounts and categories:
 
+**Basic Commands:**
 - "Hey Siri, add expense"
 - "Hey Siri, log expense"
 - "Hey Siri, add an expense"
-- "Hey Siri, record expense"
-- "Hey Siri, add expense to ledger"
-- "Hey Siri, log expense in ledger"
-- "Hey Siri, add $5 expense"
-- "Hey Siri, log $5 expense"
-- And 5 more variations!
+
+**With Amounts:**
+- "Hey Siri, add $25 expense"
+- "Hey Siri, log $15.50 expense"
+- "Hey Siri, add 42 dollar expense"
+
+**With Categories:**
+- "Hey Siri, add food expense"
+- "Hey Siri, log transport expense"
+- "Hey Siri, add shopping expense"
+- "Hey Siri, add entertainment expense"
+- "Hey Siri, add utilities expense"
+
+**Combined (Amount + Category):**
+- "Hey Siri, add $12 food expense"
+- "Hey Siri, log $8.50 transport expense"
+- "Hey Siri, add $35 shopping expense"
+
+**Supported Categories:**
+- 🍕 Food
+- 🚗 Transport
+- 🛍️ Shopping
+- 🎬 Entertainment
+- ⚡ Utilities
+- 📝 Other (default)
 
 ### How It Works
 
@@ -148,11 +168,25 @@ The Siri integration uses iOS App Intents with a sophisticated data flow archite
 
 ### Key Components
 
-- **SimpleExpenseIntent.swift**: Siri command handler and data storage
+- **SimpleExpenseIntent.swift**: Siri command handler with parameter parsing
+- **ExpenseCategory enum**: Predefined categories with emoji representations
+- **Intent Parameters**: Amount (Double) and Category (enum) with defaults
 - **AppDelegate.swift**: iOS app lifecycle management and sync coordination
 - **UserDefaults**: Temporary storage for offline scenarios
 - **MethodChannel**: iOS ↔ Flutter communication bridge
 - **DashboardPage**: Flutter expense processing and UI updates
+
+### Parameters
+
+The Siri intent now accepts two main parameters:
+
+1. **Amount** (`Double?`): The expense amount (optional, defaults to $5.00)
+   - Examples: "$25", "$15.50", "42 dollars"
+   - Parsed automatically by Siri
+
+2. **Category** (`ExpenseCategory`): The expense category (optional, defaults to "other")
+   - Options: food, transport, shopping, entertainment, utilities, other
+   - Examples: "food expense", "transport expense", "shopping expense"
 
 ### Performance Comparison
 
@@ -174,17 +208,19 @@ The Siri integration uses iOS App Intents with a sophisticated data flow archite
 **Console Logs:**
 ```
 ✅ "Siri Intent: Stored expense in UserDefaults"
+✅ "Siri Intent: Amount: $25.00, Category: food"
 ✅ "AppDelegate: App became active"
-✅ "AppDelegate: Found X pending Siri expenses"
-✅ "Successfully synced expense X: success"
+✅ "AppDelegate: Found 1 pending Siri expenses"
+✅ "Successfully synced expense 1: success"
 ✅ "Successfully added expense via Siri shortcut"
 ```
 
 **UI Changes:**
 ```
 ✅ New expense appears in "Recent Expenses" list
-✅ $5.00 amount, "other" category
+✅ Custom amount (e.g., $25.00) and category (e.g., food)
 ✅ Current timestamp
+✅ "Added via Siri" note
 ```
 
 This Siri integration provides a seamless voice-controlled expense tracking experience with 100% reliability across all app states! 🚀

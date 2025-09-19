@@ -3,7 +3,7 @@ import 'package:ledgerlite/models/expense_model.dart';
 import 'package:ledgerlite/features/dashboard/dashboard_page.dart';
 
 void initializeSiriShortcutListener() {
-  const platform = MethodChannel('com.wolf.ledgerlite/shortcut');
+  const platform = MethodChannel('ledgerlite/siri');
 
   platform.setMethodCallHandler((call) async {
     try {

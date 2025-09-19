@@ -146,7 +146,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
   Future<void> _testSiriConnection() async {
     try {
-      const platform = MethodChannel('com.wolf.ledgerlite/shortcut');
+      const platform = MethodChannel('ledgerlite/siri');
 
       // Test writing a dummy expense
       await platform.invokeMethod('testWrite');
