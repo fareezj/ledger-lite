@@ -47,3 +47,52 @@ void initializeSiriShortcutListener() {
     return null;
   });
 }
+
+/// Service class for managing Siri shortcut setup and interaction
+class SiriShortcutService {
+  static const MethodChannel _platform = MethodChannel('ledgerlite/siri');
+
+  /// Shows the native iOS UI to add a Siri shortcut
+  static Future<String> showAddShortcut() async {
+    try {
+      final result = await _platform.invokeMethod('showAddShortcut');
+      return result as String;
+    } on PlatformException catch (e) {
+      print('Error showing add shortcut UI: ${e.message}');
+      return 'Error: ${e.message}';
+    }
+  }
+
+  /// Opens iOS Settings to Siri & Search section
+  static Future<String> openSiriSettings() async {
+    try {
+      final result = await _platform.invokeMethod('openSiriSettings');
+      return result as String;
+    } on PlatformException catch (e) {
+      print('Error opening Siri settings: ${e.message}');
+      return 'Error: ${e.message}';
+    }
+  }
+
+  /// Refreshes Siri shortcuts by clearing interactions and re-donating
+  static Future<String> refreshSiriShortcuts() async {
+    try {
+      final result = await _platform.invokeMethod('refreshSiriShortcuts');
+      return result as String;
+    } on PlatformException catch (e) {
+      print('Error refreshing Siri shortcuts: ${e.message}');
+      return 'Error: ${e.message}';
+    }
+  }
+
+  /// Checks if Siri is available on this device
+  static Future<bool> checkSiriAvailability() async {
+    try {
+      final result = await _platform.invokeMethod('checkSiriAvailability');
+      return result as bool;
+    } on PlatformException catch (e) {
+      print('Error checking Siri availability: ${e.message}');
+      return false;
+    }
+  }
+}

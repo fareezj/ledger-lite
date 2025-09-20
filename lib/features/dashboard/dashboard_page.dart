@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerlite/models/expense_model.dart';
 import 'package:ledgerlite/features/dashboard/dashboard_provider.dart';
 import 'package:ledgerlite/services/pending_expense_service.dart';
+import 'package:ledgerlite/widgets/siri_shortcut_setup_widget.dart';
 
 // Method channel for URL scheme handling
 const platform = MethodChannel('com.wolf.ledgerlit/url_handler');
@@ -192,6 +193,8 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                 'LedgerLite - Shortcut Test',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 20),
+              const SiriShortcutSetupWidget(),
               const SizedBox(height: 20),
               const Text(
                 'Last Siri Shortcut Data:',

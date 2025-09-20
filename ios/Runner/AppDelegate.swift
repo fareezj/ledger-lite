@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import Intents
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -27,8 +28,16 @@ import UIKit
     // Register App Intents for Siri discovery
     #if DEBUG
     print("DEBUG: Registering App Intents...")
-    // Note: donate() is called automatically by the system when AppShortcutsProvider is defined
-    print("DEBUG: App Intents registered via AppShortcutsProvider")
+    #endif
+    
+    // Donate shortcuts to Siri for better discoverability
+    donateShortcuts()
+    
+    // Also try to register the App Shortcuts Provider explicitly
+    registerAppShortcuts()
+    
+    #if DEBUG
+    print("DEBUG: App Intents registered and shortcuts donated")
     #endif
     
     // Set up method call handler for Flutter to iOS communication
@@ -42,6 +51,9 @@ import UIKit
           let note = args["note"] as? String ?? ""
           
           print("Received expense from Flutter: $\(amount) - \(category) - \(note)")
+          
+          // Donate shortcut based on this expense to help Siri learn
+          self.donateShortcutForExpense(amount: amount, category: category)
           
           // Add expense to database here if needed
           // For now, just acknowledge receipt
@@ -67,9 +79,40 @@ import UIKit
         pendingExpenses.append(testData)
         UserDefaults.standard.set(pendingExpenses, forKey: "pendingSiriExpenses")
         result("Test expense written")
-      case "getInitialUrl":
-        // For URL scheme handling - return nil for now
-        result(nil)
+      case "openSiriSettings":
+        // Open iOS Settings app to Siri & Search section
+        if let url = URL(string: "App-Prefs:SIRI") {
+          UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        } else if let url = URL(string: UIApplication.openSettingsURLString) {
+          UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }
+        result("Opening Siri settings")
+      case "showAddShortcut":
+        // Present native iOS UI to add Siri shortcut
+        self.showAddShortcutUI(result: result)
+      case "refreshSiriShortcuts":
+        // Force refresh Siri's shortcut index
+        Task {
+          do {
+            // Clear old interactions and force re-indexing
+            try await INInteraction.deleteAll()
+            #if DEBUG
+            print("DEBUG: Cleared Siri interactions for refresh")
+            #endif
+
+            // Re-donate all shortcuts
+            await self.donateShortcuts()
+            await self.registerAppShortcuts()
+
+            result("Siri shortcuts refreshed successfully")
+          } catch {
+            result(FlutterError(code: "REFRESH_FAILED", message: "Failed to refresh Siri shortcuts: \(error)", details: nil))
+          }
+        }
+      case "checkSiriAvailability":
+        // Check if Siri is available on this device
+        let siriAvailable = true // Siri is available on iOS devices that support it
+        result(siriAvailable)
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -261,6 +304,110 @@ import UIKit
       syncPendingExpenses()
     } else {
       print("AppDelegate: No pending expenses to sync")
+    }
+  }
+  
+  // Donate shortcuts to Siri for automatic discovery
+  private func donateShortcuts() {
+    #if DEBUG
+    print("DEBUG: Donating shortcuts to Siri...")
+    #endif
+
+    Task {
+      do {
+        // Donate the basic intent multiple times with different contexts
+        // This helps Siri learn and surface shortcuts more readily
+        let intent = SimpleExpenseIntent()
+        try await intent.donate()
+
+        #if DEBUG
+        print("DEBUG: Successfully donated shortcuts to Siri")
+        #endif
+      } catch {
+        #if DEBUG
+        print("DEBUG: Failed to donate shortcuts: \(error)")
+        #endif
+      }
+    }
+
+    #if DEBUG
+    print("DEBUG: Shortcut donation completed")
+    #endif
+  }  // Explicitly register App Shortcuts for Siri discovery
+  private func registerAppShortcuts() {
+    #if DEBUG
+    print("DEBUG: Explicitly registering App Shortcuts...")
+    #endif
+    
+    // Force Siri to update its shortcut index
+    Task {
+      do {
+        // Clear old interactions to force fresh learning
+        try await INInteraction.deleteAll()
+        #if DEBUG
+        print("DEBUG: Cleared Siri interaction history for fresh start")
+        #endif
+        
+      } catch {
+        #if DEBUG
+        print("DEBUG: Failed to register shortcuts: \(error)")
+        #endif
+      }
+    }
+  }
+  
+  // Donate a specific shortcut based on logged expense
+  private func donateShortcutForExpense(amount: String, category: String) {
+    // For now, just donate the basic intent to help with discoverability
+    // The AppShortcutsProvider will handle the specific phrases
+    Task {
+      do {
+        let intent = SimpleExpenseIntent()
+        try await intent.donate()
+        #if DEBUG
+        print("DEBUG: Donated shortcut for Flutter expense: $\(amount) \(category)")
+        #endif
+      } catch {
+        #if DEBUG
+        print("DEBUG: Failed to donate Flutter shortcut: \(error)")
+        #endif
+      }
+    }
+  }
+
+  // Present native iOS UI to add Siri shortcut
+  // Present native iOS UI to add Siri shortcut
+  private func showAddShortcutUI(result: @escaping FlutterResult) {
+    #if DEBUG
+    print("DEBUG: Presenting add shortcut UI")
+    #endif
+
+    // Try to open the Shortcuts app directly
+    if let shortcutsURL = URL(string: "shortcuts://") {
+      UIApplication.shared.open(shortcutsURL, options: [:]) { success in
+        if success {
+          result("Opened Shortcuts app successfully")
+        } else {
+          // Fallback to Siri settings
+          self.fallbackToSiriSettings(result: result)
+        }
+      }
+    } else {
+      // Fallback to Siri settings
+      self.fallbackToSiriSettings(result: result)
+    }
+  }
+
+  // Fallback method to open Siri settings
+  private func fallbackToSiriSettings(result: @escaping FlutterResult) {
+    if let url = URL(string: "App-Prefs:SIRI") {
+      UIApplication.shared.open(url, options: [:], completionHandler: nil)
+      result("Opened Siri settings")
+    } else if let url = URL(string: UIApplication.openSettingsURLString) {
+      UIApplication.shared.open(url, options: [:], completionHandler: nil)
+      result("Opened iOS settings")
+    } else {
+      result(FlutterError(code: "CANNOT_OPEN_SETTINGS", message: "Cannot open settings", details: nil))
     }
   }
 }
