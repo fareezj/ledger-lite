@@ -7,7 +7,7 @@ import 'package:ledgerlite/services/pending_expense_service.dart';
 import 'package:ledgerlite/widgets/siri_shortcut_setup_widget.dart';
 
 // Method channel for URL scheme handling
-const platform = MethodChannel('com.wolf.ledgerlit/url_handler');
+const platform = MethodChannel('com.wolf.ledgerlite/url_handler');
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -31,22 +31,11 @@ class DashboardPageState extends ConsumerState<DashboardPage>
     _globalRef = ref;
     WidgetsBinding.instance.addObserver(this);
 
-    // Set up Siri shortcut listener
-    // initializeSiriShortcutListener(); // Now handled in main.dart
-
     // Load expenses when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(dashboardNotifierProvider.notifier).loadExpenses();
-      _handleInitialUrl(); // Check if app was launched via URL scheme
       _syncSiriExpenses(); // Check for Siri expenses
     });
-  }
-
-  // Check if app was launched with URL scheme to add expense
-  void _handleInitialUrl() async {
-    // For now, just sync any pending expenses from Siri
-    // The URL scheme approach was replaced with UserDefaults for reliability
-    print('Dashboard: Checking for pending Siri expenses on app launch');
   }
 
   // Check for expenses added via Siri
@@ -110,152 +99,87 @@ class DashboardPageState extends ConsumerState<DashboardPage>
     }
   }
 
-  Future<void> _syncPendingExpenses() async {
-    try {
-      final pendingService = ref.read(pendingExpenseServiceProvider);
-      final syncedCount = await pendingService.syncPendingExpenses();
-
-      if (syncedCount > 0) {
-        // Refresh the expense list to show newly synced expenses
-        ref.read(dashboardNotifierProvider.notifier).loadExpenses();
-
-        // Show a snackbar to inform user
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Synced $syncedCount expenses from Siri shortcuts!',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-      // Don't show message for no pending expenses to avoid spam
-    } catch (e) {
-      print('Error syncing pending expenses: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error syncing: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _testSiriConnection() async {
-    try {
-      const platform = MethodChannel('ledgerlite/siri');
-
-      // Test writing a dummy expense
-      await platform.invokeMethod('testWrite');
-
-      // Test reading it back
-      final result = await platform.invokeMethod('getPendingExpenses');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'iOS Connection OK. Pending expenses: ${result?.length ?? 0}',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      print('iOS connection test failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('iOS connection failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(dashboardNotifierProvider);
 
     return Scaffold(
+      backgroundColor: Colors.grey[200],
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'LedgerLite - Shortcut Test',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              const SiriShortcutSetupWidget(),
-              const SizedBox(height: 20),
-              const Text(
-                'Last Siri Shortcut Data:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 10),
-              ValueListenableBuilder<String>(
-                valueListenable: _shortcutNotifier,
-                builder: (context, value, child) {
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey),
-                    ),
-                    child: Text(
-                      value,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Try saying: "Hey Siri, log expense"',
-                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-              ),
-              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _syncPendingExpenses,
-                      icon: const Icon(Icons.sync),
-                      label: const Text('Sync Pending'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
+                    child: Card(
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 45,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Total Expense Today',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                            Text(
+                              '\$${dashboardState.totalExpenseToday.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _testSiriConnection,
-                      icon: const Icon(Icons.bug_report),
-                      label: const Text('Test Siri'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
+                    child: Card(
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 45,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Total Expense This Month',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                            Text(
+                              '\$${dashboardState.totalExpenseMonth.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
+              const SiriShortcutSetupWidget(),
+              const SizedBox(height: 20),
               const Text(
                 'Recent Expenses:',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
@@ -279,10 +203,10 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                             margin: const EdgeInsets.symmetric(vertical: 4),
                             child: ListTile(
                               leading: const Icon(Icons.receipt),
-                              title: Text('\$${expense.amount}'),
-                              subtitle: Text(
-                                '${expense.category} • ${expense.date}',
+                              title: Text(
+                                '\$${double.parse(expense.amount).toStringAsFixed(2)}',
                               ),
+                              subtitle: Text(expense.category),
                               trailing: Text(
                                 DateTime.parse(
                                   expense.date,
@@ -412,6 +336,74 @@ class DashboardPageState extends ConsumerState<DashboardPage>
       }
     } catch (e) {
       print('Error in updateShortcutData: $e');
+    }
+  }
+
+  Future<void> _syncPendingExpenses() async {
+    try {
+      final pendingService = ref.read(pendingExpenseServiceProvider);
+      final syncedCount = await pendingService.syncPendingExpenses();
+
+      if (syncedCount > 0) {
+        // Refresh the expense list to show newly synced expenses
+        ref.read(dashboardNotifierProvider.notifier).loadExpenses();
+
+        // Show a snackbar to inform user
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Synced $syncedCount expenses from Siri shortcuts!',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+      // Don't show message for no pending expenses to avoid spam
+    } catch (e) {
+      print('Error syncing pending expenses: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error syncing: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _testSiriConnection() async {
+    try {
+      const platform = MethodChannel('ledgerlite/siri');
+
+      // Test writing a dummy expense
+      await platform.invokeMethod('testWrite');
+
+      // Test reading it back
+      final result = await platform.invokeMethod('getPendingExpenses');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'iOS Connection OK. Pending expenses: ${result?.length ?? 0}',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('iOS connection test failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('iOS connection failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

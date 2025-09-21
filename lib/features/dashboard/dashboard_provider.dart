@@ -5,13 +5,27 @@ import 'package:ledgerlite/models/expense_model.dart';
 class DashboardPageState {
   final bool isLoading;
   final List<ExpenseModel> expenses;
+  final double totalExpenseToday;
+  final double totalExpenseMonth;
 
-  const DashboardPageState({this.isLoading = false, this.expenses = const []});
+  const DashboardPageState({
+    this.isLoading = false,
+    this.expenses = const [],
+    this.totalExpenseToday = 0.0,
+    this.totalExpenseMonth = 0.0,
+  });
 
-  DashboardPageState copyWith({bool? isLoading, List<ExpenseModel>? expenses}) {
+  DashboardPageState copyWith({
+    bool? isLoading,
+    List<ExpenseModel>? expenses,
+    double? totalExpenseToday,
+    double? totalExpenseMonth,
+  }) {
     return DashboardPageState(
       isLoading: isLoading ?? this.isLoading,
       expenses: expenses ?? this.expenses,
+      totalExpenseToday: totalExpenseToday ?? this.totalExpenseToday,
+      totalExpenseMonth: totalExpenseMonth ?? this.totalExpenseMonth,
     );
   }
 }
@@ -49,7 +63,39 @@ class DashboardNotifier extends Notifier<DashboardPageState> {
 
     try {
       final expenses = await expenseDao.getAllExpenses();
-      print('EXPENSES: $expenses');
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final expensesToday = expenses.where(
+        (e) =>
+            DateTime.parse(e.date).isAtSameMomentAs(today) ||
+            (DateTime.parse(e.date).isAfter(today) &&
+                DateTime.parse(
+                  e.date,
+                ).isBefore(today.add(const Duration(days: 1)))),
+      );
+      final totalExpenseToday = expensesToday.fold(
+        0.0,
+        (a, b) => a + double.parse(b.amount),
+      );
+      final expensesThisMonth = expenses.where(
+        (e) =>
+            DateTime.parse(e.date).month == now.month &&
+            DateTime.parse(e.date).year == now.year,
+      );
+      final totalExpenseMonth = expensesThisMonth.fold(
+        0.0,
+        (a, b) => a + double.parse(b.amount),
+      );
+
+      state = state.copyWith(
+        expenses: expenses,
+        totalExpenseToday: totalExpenseToday,
+        totalExpenseMonth: totalExpenseMonth,
+        isLoading: false,
+      );
+
+      print('state: ${state.totalExpenseMonth}');
+      print('state: ${state.totalExpenseToday}');
       state = state.copyWith(expenses: expenses, isLoading: false);
     } catch (e) {
       print('Error loading expenses: $e');
