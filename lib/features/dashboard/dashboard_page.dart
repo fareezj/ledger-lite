@@ -5,6 +5,7 @@ import 'package:ledgerlite/models/expense_model.dart';
 import 'package:ledgerlite/features/dashboard/dashboard_provider.dart';
 import 'package:ledgerlite/services/pending_expense_service.dart';
 import 'package:ledgerlite/widgets/siri_shortcut_setup_widget.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 // Method channel for URL scheme handling
 const platform = MethodChannel('com.wolf.ledgerlite/url_handler');
@@ -24,6 +25,17 @@ class DashboardPageState extends ConsumerState<DashboardPage>
   );
 
   static WidgetRef? _globalRef;
+
+  final bool _isDialogShowing = false;
+  DateTime _lastTap = DateTime(0);
+
+  final colorList = <Color>[
+    const Color(0xfffdcb6e),
+    const Color(0xff0984e3),
+    const Color(0xfffd79a8),
+    const Color(0xffe17055),
+    const Color(0xff6c5ce7),
+  ];
 
   @override
   void initState() {
@@ -108,85 +120,141 @@ class DashboardPageState extends ConsumerState<DashboardPage>
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Card(
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 45,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Total Expense Today',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.normal,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Card(
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 45,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Total Expense Today',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.normal,
+                                ),
                               ),
-                            ),
-                            Text(
-                              '\$${dashboardState.totalExpenseToday.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                              Text(
+                                '\$${dashboardState.totalExpenseToday.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Card(
-                      color: Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 45,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Total Expense This Month',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                            Text(
-                              '\$${dashboardState.totalExpenseMonth.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
+                    Expanded(
+                      child: Card(
+                        color: Colors.white,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 45,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Total Expense This Month',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                              Text(
+                                '\$${dashboardState.totalExpenseMonth.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 300,
+                  child: PieChart(
+                    PieChartData(
+                      sections: dashboardState.chartData.entries.map((entry) {
+                        int index = dashboardState.chartData.keys
+                            .toList()
+                            .indexOf(entry.key);
+                        return PieChartSectionData(
+                          value: entry.value,
+                          color: colorList[index % colorList.length],
+                          title: entry.value.toStringAsFixed(1),
+                          radius: MediaQuery.of(context).size.width / 6.4,
+                        );
+                      }).toList(),
+                      centerSpaceRadius: 50,
+                      sectionsSpace: 2,
+                      pieTouchData: PieTouchData(
+                        touchCallback:
+                            (FlTouchEvent event, PieTouchResponse? response) {
+                              if (DateTime.now()
+                                          .difference(_lastTap)
+                                          .inMilliseconds >
+                                      300 &&
+                                  response != null &&
+                                  response.touchedSection != null) {
+                                _lastTap = DateTime.now();
+                                int index = response
+                                    .touchedSection!
+                                    .touchedSectionIndex;
+                                String category = dashboardState.chartData.keys
+                                    .elementAt(index);
+                                double value = dashboardState.chartData.values
+                                    .elementAt(index);
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(category),
+                                    content: Text(
+                                      'Amount: \$${value.toStringAsFixed(2)}',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: const Text('Close'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            },
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const SiriShortcutSetupWidget(),
-              const SizedBox(height: 20),
-              const Text(
-                'Recent Expenses:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: dashboardState.isLoading
+                ),
+                const SiriShortcutSetupWidget(),
+                const SizedBox(height: 20),
+                const Text(
+                  'Recent Expenses:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 10),
+                dashboardState.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : dashboardState.expenses.isEmpty
                     ? const Center(
@@ -196,6 +264,8 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                         ),
                       )
                     : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: dashboardState.expenses.length,
                         itemBuilder: (context, index) {
                           final expense = dashboardState.expenses[index];
@@ -220,8 +290,8 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                           );
                         },
                       ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -367,39 +437,6 @@ class DashboardPageState extends ConsumerState<DashboardPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error syncing: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _testSiriConnection() async {
-    try {
-      const platform = MethodChannel('ledgerlite/siri');
-
-      // Test writing a dummy expense
-      await platform.invokeMethod('testWrite');
-
-      // Test reading it back
-      final result = await platform.invokeMethod('getPendingExpenses');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'iOS Connection OK. Pending expenses: ${result?.length ?? 0}',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      print('iOS connection test failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('iOS connection failed: $e'),
             backgroundColor: Colors.red,
           ),
         );

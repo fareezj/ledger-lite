@@ -7,25 +7,28 @@ class DashboardPageState {
   final List<ExpenseModel> expenses;
   final double totalExpenseToday;
   final double totalExpenseMonth;
+  final Map<String, double> chartData;
 
   const DashboardPageState({
     this.isLoading = false,
     this.expenses = const [],
     this.totalExpenseToday = 0.0,
     this.totalExpenseMonth = 0.0,
+    this.chartData = const {},
   });
-
   DashboardPageState copyWith({
     bool? isLoading,
     List<ExpenseModel>? expenses,
     double? totalExpenseToday,
     double? totalExpenseMonth,
+    Map<String, double>? chartData,
   }) {
     return DashboardPageState(
       isLoading: isLoading ?? this.isLoading,
       expenses: expenses ?? this.expenses,
       totalExpenseToday: totalExpenseToday ?? this.totalExpenseToday,
       totalExpenseMonth: totalExpenseMonth ?? this.totalExpenseMonth,
+      chartData: chartData ?? this.chartData,
     );
   }
 }
@@ -63,6 +66,8 @@ class DashboardNotifier extends Notifier<DashboardPageState> {
 
     try {
       final expenses = await expenseDao.getAllExpenses();
+
+      /* Get total expenses */
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final expensesToday = expenses.where(
@@ -87,15 +92,37 @@ class DashboardNotifier extends Notifier<DashboardPageState> {
         (a, b) => a + double.parse(b.amount),
       );
 
+      /* Get category total */
+      final Map<String, double> chartData = {};
+      final categories = [
+        'food',
+        'transport',
+        'shopping',
+        'entertainment',
+        'utilities',
+        'healthcare',
+        'education',
+        'travel',
+        'personal',
+        'business',
+        'other',
+      ];
+      for (final category in categories) {
+        final categoryExpenses = expenses
+            .where((e) => e.category == category)
+            .toList()
+            .fold(0.0, (a, b) => a + double.parse(b.amount));
+        chartData[category] = categoryExpenses;
+      }
+
       state = state.copyWith(
         expenses: expenses,
         totalExpenseToday: totalExpenseToday,
         totalExpenseMonth: totalExpenseMonth,
+        chartData: chartData,
         isLoading: false,
       );
 
-      print('state: ${state.totalExpenseMonth}');
-      print('state: ${state.totalExpenseToday}');
       state = state.copyWith(expenses: expenses, isLoading: false);
     } catch (e) {
       print('Error loading expenses: $e');

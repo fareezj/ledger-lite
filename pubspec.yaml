@@ -39,6 +39,7 @@ dependencies:
   uni_links: ^0.5.1
   shared_preferences: ^2.3.2
   intl: ^0.20.2
+  fl_chart: ^0.66.2
 
 dev_dependencies:
   flutter_test:
