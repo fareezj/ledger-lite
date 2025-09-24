@@ -46,13 +46,16 @@ class DashboardNotifier extends Notifier<DashboardPageState> {
     return const DashboardPageState();
   }
 
-  Future<void> addExpense(ExpenseModel expense) async {
+  Future<void> addExpense(ExpenseModel expense, [int? month, int? year]) async {
     state = state.copyWith(isLoading: true);
 
     try {
       await expenseDao.addExpense(expense);
       // Refresh the expenses list after adding
-      await loadExpenses();
+      await loadExpenses(
+        month ?? DateTime.now().month,
+        year ?? DateTime.now().year,
+      );
     } catch (e) {
       // Handle error
       print('Error adding expense: $e');
@@ -61,33 +64,40 @@ class DashboardNotifier extends Notifier<DashboardPageState> {
     }
   }
 
-  Future<void> updateExpense(ExpenseModel newExpense, int expenseId) async {
+  Future<void> updateExpense(
+    ExpenseModel newExpense,
+    int expenseId,
+    int month,
+    int year,
+  ) async {
     try {
       await expenseDao.updateExpense(newExpense, expenseId);
-      await loadExpenses();
+      await loadExpenses(month, year);
     } catch (e) {
       throw Exception(e);
     }
   }
 
-  Future<void> deleteExpense(int expenseId) async {
+  Future<void> deleteExpense(int expenseId, int month, int year) async {
     state = state.copyWith(isLoading: true);
 
     try {
       await expenseDao.deleteExpense(expenseId);
       // Refresh the expenses list after deleting
-      await loadExpenses();
+      await loadExpenses(month, year);
     } catch (e) {
       print('Error deleting expense: $e');
       state = state.copyWith(isLoading: false);
     }
   }
 
-  Future<void> loadExpenses() async {
+  Future<void> loadExpenses(int month, [int? year]) async {
     state = state.copyWith(isLoading: true);
 
     try {
       final expenses = await expenseDao.getAllExpenses();
+
+      final selectedYear = year ?? DateTime.now().year;
 
       /* Get total expenses */
       final now = DateTime.now();
@@ -104,12 +114,12 @@ class DashboardNotifier extends Notifier<DashboardPageState> {
         0.0,
         (a, b) => a + double.parse(b.amount),
       );
-      final expensesThisMonth = expenses.where(
+      final expensesSelectedMonth = expenses.where(
         (e) =>
-            DateTime.parse(e.date).month == now.month &&
-            DateTime.parse(e.date).year == now.year,
+            DateTime.parse(e.date).month == month &&
+            DateTime.parse(e.date).year == selectedYear,
       );
-      final totalExpenseMonth = expensesThisMonth.fold(
+      final totalExpenseMonth = expensesSelectedMonth.fold(
         0.0,
         (a, b) => a + double.parse(b.amount),
       );
@@ -131,21 +141,33 @@ class DashboardNotifier extends Notifier<DashboardPageState> {
       ];
       for (final category in categories) {
         final categoryExpenses = expenses
-            .where((e) => e.category == category)
+            .where(
+              (e) =>
+                  e.category == category &&
+                  DateTime.parse(e.date).month == month &&
+                  DateTime.parse(e.date).year == selectedYear,
+            )
             .toList()
             .fold(0.0, (a, b) => a + double.parse(b.amount));
         chartData[category] = categoryExpenses;
       }
 
+      // Filter expenses to show only selected month and year
+      final filteredExpenses = expenses
+          .where(
+            (e) =>
+                DateTime.parse(e.date).month == month &&
+                DateTime.parse(e.date).year == selectedYear,
+          )
+          .toList();
+
       state = state.copyWith(
-        expenses: expenses,
+        expenses: filteredExpenses,
         totalExpenseToday: totalExpenseToday,
         totalExpenseMonth: totalExpenseMonth,
         chartData: chartData,
         isLoading: false,
       );
-
-      state = state.copyWith(expenses: expenses, isLoading: false);
     } catch (e) {
       print('Error loading expenses: $e');
       state = state.copyWith(isLoading: false);

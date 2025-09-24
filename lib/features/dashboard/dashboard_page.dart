@@ -26,7 +26,8 @@ class DashboardPageState extends ConsumerState<DashboardPage>
   );
 
   static WidgetRef? _globalRef;
-
+  int currentMonth = DateTime.now().month;
+  int currentYear = DateTime.now().year;
   DateTime _lastTap = DateTime(0);
 
   final colorList = <Color>[
@@ -45,7 +46,9 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
     // Load expenses when the page initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(dashboardNotifierProvider.notifier).loadExpenses();
+      ref
+          .read(dashboardNotifierProvider.notifier)
+          .loadExpenses(currentMonth, currentYear);
       _syncSiriExpenses(); // Check for Siri expenses
     });
   }
@@ -73,7 +76,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
           await ref
               .read(dashboardNotifierProvider.notifier)
-              .addExpense(expense);
+              .addExpense(expense, currentMonth, currentYear);
         }
 
         // Clear processed expenses
@@ -124,6 +127,57 @@ class DashboardPageState extends ConsumerState<DashboardPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Month and Year Selection
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      // Month Dropdown
+                      DropdownButton<int>(
+                        value: currentMonth,
+                        items: List.generate(12, (index) {
+                          final month = index + 1;
+                          return DropdownMenuItem<int>(
+                            value: month,
+                            child: Text(_getMonthName(month)),
+                          );
+                        }),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              currentMonth = value;
+                            });
+                            ref
+                                .read(dashboardNotifierProvider.notifier)
+                                .loadExpenses(currentMonth, currentYear);
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 20),
+                      // Year Dropdown
+                      DropdownButton<int>(
+                        value: currentYear,
+                        items: List.generate(5, (index) {
+                          final year = DateTime.now().year - 2 + index;
+                          return DropdownMenuItem<int>(
+                            value: year,
+                            child: Text(year.toString()),
+                          );
+                        }),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              currentYear = value;
+                            });
+                            ref
+                                .read(dashboardNotifierProvider.notifier)
+                                .loadExpenses(currentMonth, currentYear);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
                 if (dashboardState.expenses.isNotEmpty) ...[
                   Row(
                     children: [
@@ -509,7 +563,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
             try {
               await ref
                   .read(dashboardNotifierProvider.notifier)
-                  .addExpense(expense);
+                  .addExpense(expense, currentMonth, currentYear);
 
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -545,7 +599,12 @@ class DashboardPageState extends ConsumerState<DashboardPage>
             try {
               await ref
                   .read(dashboardNotifierProvider.notifier)
-                  .updateExpense(updatedExpense, int.parse(expense.id));
+                  .updateExpense(
+                    updatedExpense,
+                    int.parse(expense.id),
+                    currentMonth,
+                    currentYear,
+                  );
 
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -600,7 +659,11 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                 try {
                   await ref
                       .read(dashboardNotifierProvider.notifier)
-                      .deleteExpense(int.parse(expense.id));
+                      .deleteExpense(
+                        int.parse(expense.id),
+                        currentMonth,
+                        currentYear,
+                      );
 
                   if (context.mounted) {
                     Navigator.of(context).pop();
@@ -640,7 +703,11 @@ class DashboardPageState extends ConsumerState<DashboardPage>
       if (_globalRef != null) {
         _globalRef!
             .read(dashboardNotifierProvider.notifier)
-            .addExpense(expenseModel);
+            .addExpense(
+              expenseModel,
+              DateTime.now().month,
+              DateTime.now().year,
+            );
         print('Successfully added expense via Siri shortcut');
       } else {
         print('Global ref is null, cannot add expense to provider');
@@ -657,7 +724,9 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
       if (syncedCount > 0) {
         // Refresh the expense list to show newly synced expenses
-        ref.read(dashboardNotifierProvider.notifier).loadExpenses();
+        ref
+            .read(dashboardNotifierProvider.notifier)
+            .loadExpenses(currentMonth, currentYear);
 
         // Show a snackbar to inform user
         if (mounted) {
@@ -683,5 +752,23 @@ class DashboardPageState extends ConsumerState<DashboardPage>
         );
       }
     }
+  }
+
+  String _getMonthName(int month) {
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return monthNames[month - 1];
   }
 }
