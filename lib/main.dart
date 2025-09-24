@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerlite/db/app_database.dart';
-import 'package:ledgerlite/features/dashboard/dashboard_page.dart';
+import 'package:ledgerlite/features/splash/splash_page.dart';
+import 'package:ledgerlite/router/route_generator.dart';
 import 'package:ledgerlite/services/pending_expense_service.dart';
 import 'package:ledgerlite/services/siri_shortcut_service.dart';
 
@@ -57,11 +58,13 @@ class _MyAppState extends ConsumerState<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ledgerlite',
+      onGenerateRoute: RouteGenerator.generateRoute,
+      color: Color(0xFFF9F6F1),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: _isInitialized
-          ? const DashboardPage()
+          ? const SplashPage()
           : const Scaffold(
               body: Center(
                 child: Column(
