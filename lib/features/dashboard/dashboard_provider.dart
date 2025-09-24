@@ -61,6 +61,28 @@ class DashboardNotifier extends Notifier<DashboardPageState> {
     }
   }
 
+  Future<void> updateExpense(ExpenseModel newExpense, int expenseId) async {
+    try {
+      await expenseDao.updateExpense(newExpense, expenseId);
+      await loadExpenses();
+    } catch (e) {
+      throw Exception(e);
+    }
+  }
+
+  Future<void> deleteExpense(int expenseId) async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      await expenseDao.deleteExpense(expenseId);
+      // Refresh the expenses list after deleting
+      await loadExpenses();
+    } catch (e) {
+      print('Error deleting expense: $e');
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
   Future<void> loadExpenses() async {
     state = state.copyWith(isLoading: true);
 

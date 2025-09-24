@@ -5,6 +5,7 @@ import 'package:ledgerlite/models/expense_model.dart';
 import 'package:ledgerlite/features/dashboard/dashboard_provider.dart';
 import 'package:ledgerlite/services/pending_expense_service.dart';
 import 'package:ledgerlite/widgets/siri_shortcut_setup_widget.dart';
+import 'package:ledgerlite/widgets/expense_form_dialog.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 // Method channel for URL scheme handling
@@ -26,7 +27,6 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
   static WidgetRef? _globalRef;
 
-  final bool _isDialogShowing = false;
   DateTime _lastTap = DateTime(0);
 
   final colorList = <Color>[
@@ -210,60 +210,88 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                   const SizedBox(height: 20),
                   SizedBox(
                     height: 300,
-                    child: PieChart(
-                      PieChartData(
-                        sections: dashboardState.chartData.entries.map((entry) {
-                          int index = dashboardState.chartData.keys
-                              .toList()
-                              .indexOf(entry.key);
-                          return PieChartSectionData(
-                            value: entry.value,
-                            color: colorList[index % colorList.length],
-                            title: entry.value.toStringAsFixed(1),
-                            radius: MediaQuery.of(context).size.width / 6.4,
+                    child: Builder(
+                      builder: (context) {
+                        // Filter out categories with zero values for the pie chart
+                        final nonZeroData = dashboardState.chartData.entries
+                            .where((entry) => entry.value > 0)
+                            .toList();
+
+                        if (nonZeroData.isEmpty) {
+                          return const Center(
+                            child: Text('No expense data to show'),
                           );
-                        }).toList(),
-                        centerSpaceRadius: 50,
-                        sectionsSpace: 2,
-                        pieTouchData: PieTouchData(
-                          touchCallback:
-                              (FlTouchEvent event, PieTouchResponse? response) {
-                                if (DateTime.now()
-                                            .difference(_lastTap)
-                                            .inMilliseconds >
-                                        300 &&
-                                    response != null &&
-                                    response.touchedSection != null) {
-                                  _lastTap = DateTime.now();
-                                  int index = response
-                                      .touchedSection!
-                                      .touchedSectionIndex;
-                                  String category = dashboardState
-                                      .chartData
-                                      .keys
-                                      .elementAt(index);
-                                  double value = dashboardState.chartData.values
-                                      .elementAt(index);
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(category),
-                                      content: Text(
-                                        'Amount: \$${value.toStringAsFixed(2)}',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(),
-                                          child: const Text('Close'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }
-                              },
-                        ),
-                      ),
+                        }
+
+                        return PieChart(
+                          PieChartData(
+                            sections: nonZeroData.asMap().entries.map((
+                              mapEntry,
+                            ) {
+                              final entry = mapEntry.value;
+                              final originalIndex = dashboardState
+                                  .chartData
+                                  .keys
+                                  .toList()
+                                  .indexOf(entry.key);
+
+                              return PieChartSectionData(
+                                value: entry.value,
+                                color:
+                                    colorList[originalIndex % colorList.length],
+                                title: '\$${entry.value.toStringAsFixed(0)}',
+                                radius: MediaQuery.of(context).size.width / 6.4,
+                              );
+                            }).toList(),
+                            centerSpaceRadius: 50,
+                            sectionsSpace: 2,
+                            pieTouchData: PieTouchData(
+                              touchCallback:
+                                  (
+                                    FlTouchEvent event,
+                                    PieTouchResponse? response,
+                                  ) {
+                                    if (DateTime.now()
+                                                .difference(_lastTap)
+                                                .inMilliseconds >
+                                            300 &&
+                                        response != null &&
+                                        response.touchedSection != null) {
+                                      _lastTap = DateTime.now();
+                                      int touchedIndex = response
+                                          .touchedSection!
+                                          .touchedSectionIndex;
+
+                                      // Get the correct category and value from filtered data
+                                      if (touchedIndex < nonZeroData.length) {
+                                        final touchedEntry =
+                                            nonZeroData[touchedIndex];
+                                        String category = touchedEntry.key;
+                                        double value = touchedEntry.value;
+
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: Text(category.toUpperCase()),
+                                            content: Text(
+                                              'Amount: \$${value.toStringAsFixed(2)}',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(context).pop(),
+                                                child: const Text('Close'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SiriShortcutSetupWidget(),
@@ -286,15 +314,44 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                           title: Text(
                             '\$${double.parse(expense.amount).toStringAsFixed(2)}',
                           ),
-                          subtitle: Text(expense.category),
-                          trailing: Text(
-                            DateTime.parse(
-                              expense.date,
-                            ).toString().substring(0, 10),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(expense.category.toUpperCase()),
+                              Text(
+                                DateTime.parse(
+                                  expense.date,
+                                ).toString().substring(0, 10),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () =>
+                                    _showEditExpenseDialog(context, expense),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => _showDeleteConfirmationDialog(
+                                  context,
+                                  expense,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -309,7 +366,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddExpenseDialog(context),
+        onPressed: () => _showAddExpenseFormDialog(context),
         child: const Icon(Icons.add),
       ),
     );
@@ -425,7 +482,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: () => _showAddExpenseDialog(context),
+            onPressed: () => _showAddExpenseFormDialog(context),
             icon: const Icon(Icons.add),
             label: const Text('Add Your First Expense'),
             style: ElevatedButton.styleFrom(
@@ -443,47 +500,91 @@ class DashboardPageState extends ConsumerState<DashboardPage>
     );
   }
 
-  void _showAddExpenseDialog(
-    BuildContext context, {
-    String? prefilledAmount,
-    String? prefilledCategory,
-  }) {
-    final amountController = TextEditingController(text: prefilledAmount ?? '');
-    final categoryController = TextEditingController(
-      text: prefilledCategory ?? '',
-    );
-    final noteController = TextEditingController();
+  void _showAddExpenseFormDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ExpenseFormDialog(
+          onSave: (expense) async {
+            try {
+              await ref
+                  .read(dashboardNotifierProvider.notifier)
+                  .addExpense(expense);
 
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Expense added successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error adding expense: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditExpenseDialog(BuildContext context, ExpenseModel expense) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ExpenseFormDialog(
+          expense: expense,
+          onSave: (updatedExpense) async {
+            try {
+              await ref
+                  .read(dashboardNotifierProvider.notifier)
+                  .updateExpense(updatedExpense, int.parse(expense.id));
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Expense updated successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating expense: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmationDialog(
+    BuildContext context,
+    ExpenseModel expense,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add New Expense'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: amountController,
-                decoration: const InputDecoration(
-                  labelText: 'Amount',
-                  prefixText: '\$',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: categoryController,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  hintText: 'e.g., Food, Transport, Shopping',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: noteController,
-                decoration: const InputDecoration(labelText: 'Note (optional)'),
-              ),
-            ],
+          title: const Text('Delete Expense'),
+          content: Text(
+            'Are you sure you want to delete this expense?\n\n'
+            'Amount: \$${double.parse(expense.amount).toStringAsFixed(2)}\n'
+            'Category: ${expense.category.toUpperCase()}\n'
+            'Date: ${DateTime.parse(expense.date).toString().substring(0, 10)}',
           ),
           actions: [
             TextButton(
@@ -491,39 +592,38 @@ class DashboardPageState extends ConsumerState<DashboardPage>
               child: const Text('Cancel'),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
               onPressed: () async {
-                final amount = double.tryParse(amountController.text);
-                final category = categoryController.text.trim();
-
-                if (amount != null && amount > 0 && category.isNotEmpty) {
-                  final expense = ExpenseModel(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    category: category,
-                    amount: amount.toString(),
-                    date: DateTime.now().toIso8601String(),
-                  );
-
+                try {
                   await ref
                       .read(dashboardNotifierProvider.notifier)
-                      .addExpense(expense);
+                      .deleteExpense(int.parse(expense.id));
 
                   if (context.mounted) {
                     Navigator.of(context).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Expense added successfully!'),
+                        content: Text('Expense deleted successfully!'),
+                        backgroundColor: Colors.green,
                       ),
                     );
                   }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter valid amount and category'),
-                    ),
-                  );
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error deleting expense: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               },
-              child: const Text('Add Expense'),
+              child: const Text('Delete'),
             ),
           ],
         );
