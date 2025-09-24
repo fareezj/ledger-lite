@@ -116,7 +116,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
     final dashboardState = ref.watch(dashboardNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
+      backgroundColor: Color(0xFFF9F6F1),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -124,172 +124,185 @@ class DashboardPageState extends ConsumerState<DashboardPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Card(
-                        color: Colors.white,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 45,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Total Expense Today',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
-                              Text(
-                                '\$${dashboardState.totalExpenseToday.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Card(
-                        color: Colors.white,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 45,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Total Expense This Month',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.normal,
-                                ),
-                              ),
-                              Text(
-                                '\$${dashboardState.totalExpenseMonth.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  height: 300,
-                  child: PieChart(
-                    PieChartData(
-                      sections: dashboardState.chartData.entries.map((entry) {
-                        int index = dashboardState.chartData.keys
-                            .toList()
-                            .indexOf(entry.key);
-                        return PieChartSectionData(
-                          value: entry.value,
-                          color: colorList[index % colorList.length],
-                          title: entry.value.toStringAsFixed(1),
-                          radius: MediaQuery.of(context).size.width / 6.4,
-                        );
-                      }).toList(),
-                      centerSpaceRadius: 50,
-                      sectionsSpace: 2,
-                      pieTouchData: PieTouchData(
-                        touchCallback:
-                            (FlTouchEvent event, PieTouchResponse? response) {
-                              if (DateTime.now()
-                                          .difference(_lastTap)
-                                          .inMilliseconds >
-                                      300 &&
-                                  response != null &&
-                                  response.touchedSection != null) {
-                                _lastTap = DateTime.now();
-                                int index = response
-                                    .touchedSection!
-                                    .touchedSectionIndex;
-                                String category = dashboardState.chartData.keys
-                                    .elementAt(index);
-                                double value = dashboardState.chartData.values
-                                    .elementAt(index);
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text(category),
-                                    content: Text(
-                                      'Amount: \$${value.toStringAsFixed(2)}',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(),
-                                        child: const Text('Close'),
-                                      ),
-                                    ],
+                if (dashboardState.expenses.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Card(
+                          color: Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 45,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Total Expense Today',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.normal,
+                                    color: dashboardState.expenses.isEmpty
+                                        ? Colors.grey.shade600
+                                        : null,
                                   ),
-                                );
-                              }
-                            },
+                                ),
+                                Text(
+                                  dashboardState.expenses.isEmpty
+                                      ? '\$0.00'
+                                      : '\$${dashboardState.totalExpenseToday.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: dashboardState.expenses.isEmpty
+                                        ? Colors.grey.shade500
+                                        : null,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Card(
+                          color: Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 45,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Total Expense This Month',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.normal,
+                                    color: dashboardState.expenses.isEmpty
+                                        ? Colors.grey.shade600
+                                        : null,
+                                  ),
+                                ),
+                                Text(
+                                  dashboardState.expenses.isEmpty
+                                      ? '\$0.00'
+                                      : '\$${dashboardState.totalExpenseMonth.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: dashboardState.expenses.isEmpty
+                                        ? Colors.grey.shade500
+                                        : null,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 300,
+                    child: PieChart(
+                      PieChartData(
+                        sections: dashboardState.chartData.entries.map((entry) {
+                          int index = dashboardState.chartData.keys
+                              .toList()
+                              .indexOf(entry.key);
+                          return PieChartSectionData(
+                            value: entry.value,
+                            color: colorList[index % colorList.length],
+                            title: entry.value.toStringAsFixed(1),
+                            radius: MediaQuery.of(context).size.width / 6.4,
+                          );
+                        }).toList(),
+                        centerSpaceRadius: 50,
+                        sectionsSpace: 2,
+                        pieTouchData: PieTouchData(
+                          touchCallback:
+                              (FlTouchEvent event, PieTouchResponse? response) {
+                                if (DateTime.now()
+                                            .difference(_lastTap)
+                                            .inMilliseconds >
+                                        300 &&
+                                    response != null &&
+                                    response.touchedSection != null) {
+                                  _lastTap = DateTime.now();
+                                  int index = response
+                                      .touchedSection!
+                                      .touchedSectionIndex;
+                                  String category = dashboardState
+                                      .chartData
+                                      .keys
+                                      .elementAt(index);
+                                  double value = dashboardState.chartData.values
+                                      .elementAt(index);
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(category),
+                                      content: Text(
+                                        'Amount: \$${value.toStringAsFixed(2)}',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(),
+                                          child: const Text('Close'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                              },
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SiriShortcutSetupWidget(),
-                const SizedBox(height: 20),
-                const Text(
-                  'Recent Expenses:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 10),
-                dashboardState.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : dashboardState.expenses.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No expenses yet. Tap + to add one!',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: dashboardState.expenses.length,
-                        itemBuilder: (context, index) {
-                          final expense = dashboardState.expenses[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            child: ListTile(
-                              leading: const Icon(Icons.receipt),
-                              title: Text(
-                                '\$${double.parse(expense.amount).toStringAsFixed(2)}',
-                              ),
-                              subtitle: Text(expense.category),
-                              trailing: Text(
-                                DateTime.parse(
-                                  expense.date,
-                                ).toString().substring(0, 10),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
+                  const SiriShortcutSetupWidget(),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Recent Expenses:',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 10),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: dashboardState.expenses.length,
+                    itemBuilder: (context, index) {
+                      final expense = dashboardState.expenses[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        child: ListTile(
+                          leading: const Icon(Icons.receipt),
+                          title: Text(
+                            '\$${double.parse(expense.amount).toStringAsFixed(2)}',
+                          ),
+                          subtitle: Text(expense.category),
+                          trailing: Text(
+                            DateTime.parse(
+                              expense.date,
+                            ).toString().substring(0, 10),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ] else ...[
+                  _buildEmptyState(),
+                ],
               ],
             ),
           ),
@@ -298,6 +311,134 @@ class DashboardPageState extends ConsumerState<DashboardPage>
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddExpenseDialog(context),
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.receipt_long_outlined,
+              size: 60,
+              color: Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Welcome to LedgerLite!',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Track your expenses effortlessly',
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.add_circle_outline,
+                      color: Colors.blue.shade600,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Tap the + button to add your first expense',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.mic_outlined,
+                      color: Colors.blue.shade600,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Use Siri shortcuts for quick expense logging',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.insights_outlined,
+                      color: Colors.blue.shade600,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'View your spending patterns with charts',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton.icon(
+            onPressed: () => _showAddExpenseDialog(context),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Your First Expense'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.shade600,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          const SiriShortcutSetupWidget(),
+        ],
       ),
     );
   }

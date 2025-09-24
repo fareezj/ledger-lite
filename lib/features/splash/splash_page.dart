@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerlite/widgets/text_widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashPage extends ConsumerStatefulWidget {
   const SplashPage({super.key});
@@ -30,7 +31,11 @@ class _SplashPageState extends ConsumerState<SplashPage> {
             ),
             SizedBox(height: 32),
             GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/dashboard'),
+              onTap: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('first_time_login', false);
+                Navigator.popAndPushNamed(context, '/dashboard');
+              },
               child: Container(
                 width: 200,
                 height: 48,

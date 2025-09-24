@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerlite/db/app_database.dart';
+import 'package:ledgerlite/features/dashboard/dashboard_page.dart';
 import 'package:ledgerlite/features/splash/splash_page.dart';
 import 'package:ledgerlite/router/route_generator.dart';
 import 'package:ledgerlite/services/pending_expense_service.dart';
 import 'package:ledgerlite/services/siri_shortcut_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,8 +39,6 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
-  bool _isInitialized = false;
-
   @override
   void initState() {
     super.initState();
@@ -47,11 +47,6 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   Future<void> _initializeApp() async {
     await initializeApp(ref);
-    if (mounted) {
-      setState(() {
-        _isInitialized = true;
-      });
-    }
   }
 
   @override
@@ -63,25 +58,19 @@ class _MyAppState extends ConsumerState<MyApp> {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: _isInitialized
-          ? const SplashPage()
-          : const Scaffold(
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Initializing ledgerlite...'),
-                    SizedBox(height: 8),
-                    Text(
-                      'Syncing Siri shortcut expenses',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      home: FutureBuilder<bool>(
+        future: SharedPreferences.getInstance().then(
+          (prefs) => prefs.getBool('first_time_login') ?? true,
+        ),
+        builder: (context, snapshot) {
+          print(snapshot.data);
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const CircularProgressIndicator();
+          }
+          final firstTimeLogin = snapshot.data ?? false;
+          return firstTimeLogin ? SplashPage() : const DashboardPage();
+        },
+      ),
     );
   }
 }
