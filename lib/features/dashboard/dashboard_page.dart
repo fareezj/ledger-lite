@@ -4,8 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ledgerlite/models/expense_model.dart';
 import 'package:ledgerlite/features/dashboard/dashboard_provider.dart';
 import 'package:ledgerlite/services/pending_expense_service.dart';
-import 'package:ledgerlite/widgets/siri_shortcut_setup_widget.dart';
+import 'package:ledgerlite/widgets/siri_shortcut_setup_dialog.dart';
 import 'package:ledgerlite/widgets/expense_form_dialog.dart';
+import 'package:ledgerlite/widgets/text_widgets.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 // Method channel for URL scheme handling
@@ -120,7 +121,23 @@ class DashboardPageState extends ConsumerState<DashboardPage>
 
     return Scaffold(
       backgroundColor: Color(0xFFF9F6F1),
+      appBar: AppBar(
+        title: const Text(
+          'LedgerLite',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Color(0xFFF9F6F1),
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => _showSiriSettingsDialog(context),
+            tooltip: 'Siri Shortcuts Settings',
+          ),
+        ],
+      ),
       body: SafeArea(
+        bottom: false,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
@@ -128,52 +145,75 @@ class DashboardPageState extends ConsumerState<DashboardPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Month and Year Selection
-                Container(
-                  padding: const EdgeInsets.all(16),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
                   child: Row(
                     children: [
-                      // Month Dropdown
-                      DropdownButton<int>(
-                        value: currentMonth,
-                        items: List.generate(12, (index) {
-                          final month = index + 1;
-                          return DropdownMenuItem<int>(
-                            value: month,
-                            child: Text(_getMonthName(month)),
-                          );
-                        }),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              currentMonth = value;
-                            });
-                            ref
-                                .read(dashboardNotifierProvider.notifier)
-                                .loadExpenses(currentMonth, currentYear);
-                          }
-                        },
+                      Text(
+                        'Viewing:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
-                      const SizedBox(width: 20),
+                      const SizedBox(width: 12),
+                      // Month Dropdown
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          value: currentMonth,
+                          style: TextStyle(
+                            color: Colors.grey.shade800,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          items: List.generate(12, (index) {
+                            final month = index + 1;
+                            return DropdownMenuItem<int>(
+                              value: month,
+                              child: Text(_getMonthName(month)),
+                            );
+                          }),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                currentMonth = value;
+                              });
+                              ref
+                                  .read(dashboardNotifierProvider.notifier)
+                                  .loadExpenses(currentMonth, currentYear);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       // Year Dropdown
-                      DropdownButton<int>(
-                        value: currentYear,
-                        items: List.generate(5, (index) {
-                          final year = DateTime.now().year - 2 + index;
-                          return DropdownMenuItem<int>(
-                            value: year,
-                            child: Text(year.toString()),
-                          );
-                        }),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              currentYear = value;
-                            });
-                            ref
-                                .read(dashboardNotifierProvider.notifier)
-                                .loadExpenses(currentMonth, currentYear);
-                          }
-                        },
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          value: currentYear,
+                          style: TextStyle(
+                            color: Colors.grey.shade800,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          items: List.generate(5, (index) {
+                            final year = DateTime.now().year - 2 + index;
+                            return DropdownMenuItem<int>(
+                              value: year,
+                              child: Text(year.toString()),
+                            );
+                          }),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                currentYear = value;
+                              });
+                              ref
+                                  .read(dashboardNotifierProvider.notifier)
+                                  .loadExpenses(currentMonth, currentYear);
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -183,6 +223,9 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                     children: [
                       Expanded(
                         child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
                           color: Colors.white,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -192,28 +235,16 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  'Total Expense Today',
+                                TextWidgets.mainSemiBold(
+                                  title: 'Total Expense Today',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.normal,
-                                    color: dashboardState.expenses.isEmpty
-                                        ? Colors.grey.shade600
-                                        : null,
-                                  ),
+                                  fontSize: 18,
                                 ),
-                                Text(
-                                  dashboardState.expenses.isEmpty
+                                TextWidgets.mainBold(
+                                  title: dashboardState.expenses.isEmpty
                                       ? '\$0.00'
                                       : '\$${dashboardState.totalExpenseToday.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: dashboardState.expenses.isEmpty
-                                        ? Colors.grey.shade500
-                                        : null,
-                                  ),
+                                  fontSize: 24,
                                 ),
                               ],
                             ),
@@ -222,6 +253,9 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                       ),
                       Expanded(
                         child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
                           color: Colors.white,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -231,28 +265,16 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  'Total Expense This Month',
+                                TextWidgets.mainSemiBold(
+                                  title: 'Total expense this month',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.normal,
-                                    color: dashboardState.expenses.isEmpty
-                                        ? Colors.grey.shade600
-                                        : null,
-                                  ),
+                                  fontSize: 18,
                                 ),
-                                Text(
-                                  dashboardState.expenses.isEmpty
+                                TextWidgets.mainBold(
+                                  title: dashboardState.expenses.isEmpty
                                       ? '\$0.00'
                                       : '\$${dashboardState.totalExpenseMonth.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: dashboardState.expenses.isEmpty
-                                        ? Colors.grey.shade500
-                                        : null,
-                                  ),
+                                  fontSize: 24,
                                 ),
                               ],
                             ),
@@ -348,12 +370,8 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                       },
                     ),
                   ),
-                  const SiriShortcutSetupWidget(),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Recent Expenses:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                  ),
+                  TextWidgets.mainSemiBold(title: 'Recent Expenses:'),
                   const SizedBox(height: 10),
                   ListView.builder(
                     shrinkWrap: true,
@@ -362,25 +380,26 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                     itemBuilder: (context, index) {
                       final expense = dashboardState.expenses[index];
                       return Card(
+                        color: Colors.white,
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         child: ListTile(
                           leading: const Icon(Icons.receipt),
-                          title: Text(
-                            '\$${double.parse(expense.amount).toStringAsFixed(2)}',
+                          title: TextWidgets.mainSemiBold(
+                            title:
+                                '\$${double.parse(expense.amount).toStringAsFixed(2)}',
+                            textAlign: TextAlign.start,
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(expense.category.toUpperCase()),
-                              Text(
-                                DateTime.parse(
+                              TextWidgets.mainRegular(title: expense.category),
+                              TextWidgets.mainItalic(
+                                title: DateTime.parse(
                                   expense.date,
                                 ).toString().substring(0, 10),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
+                                fontSize: 12,
+                                color: Colors.grey,
                               ),
                             ],
                           ),
@@ -420,6 +439,7 @@ class DashboardPageState extends ConsumerState<DashboardPage>
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.white,
         onPressed: () => _showAddExpenseFormDialog(context),
         child: const Icon(Icons.add),
       ),
@@ -548,7 +568,6 @@ class DashboardPageState extends ConsumerState<DashboardPage>
               ),
             ),
           ),
-          const SiriShortcutSetupWidget(),
         ],
       ),
     );
@@ -770,5 +789,14 @@ class DashboardPageState extends ConsumerState<DashboardPage>
       'December',
     ];
     return monthNames[month - 1];
+  }
+
+  void _showSiriSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return const SiriShortcutSetupDialog();
+      },
+    );
   }
 }
