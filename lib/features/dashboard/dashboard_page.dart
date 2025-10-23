@@ -229,151 +229,189 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                   ),
                 ),
                 if (dashboardState.expenses.isNotEmpty) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          color: Colors.white,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 45,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final isTablet = screenWidth > 600;
+
+                      if (isTablet) {
+                        // Tablet layout: Center cards with max width
+                        return Center(
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 600),
+                            child: Row(
                               children: [
-                                TextWidgets.mainSemiBold(
-                                  title: 'Total Expense Today',
-                                  textAlign: TextAlign.center,
-                                  fontSize: 18,
+                                Expanded(
+                                  child: _buildTotalExpenseTodayCard(
+                                    dashboardState,
+                                  ),
                                 ),
-                                TextWidgets.mainBold(
-                                  title: dashboardState.expenses.isEmpty
-                                      ? '\$0.00'
-                                      : '\$${dashboardState.totalExpenseToday.toStringAsFixed(2)}',
-                                  fontSize: 24,
+                                Expanded(
+                                  child: _buildTotalExpenseMonthCard(
+                                    dashboardState,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          color: Colors.white,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 45,
+                        );
+                      } else {
+                        // Mobile layout: Full width cards
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: _buildTotalExpenseTodayCard(
+                                dashboardState,
+                              ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                TextWidgets.mainSemiBold(
-                                  title: 'Total expense this month',
-                                  textAlign: TextAlign.center,
-                                  fontSize: 18,
-                                ),
-                                TextWidgets.mainBold(
-                                  title: dashboardState.expenses.isEmpty
-                                      ? '\$0.00'
-                                      : '\$${dashboardState.totalExpenseMonth.toStringAsFixed(2)}',
-                                  fontSize: 24,
-                                ),
-                              ],
+                            Expanded(
+                              child: _buildTotalExpenseMonthCard(
+                                dashboardState,
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
+                          ],
+                        );
+                      }
+                    },
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    height: 300,
-                    child: Builder(
-                      builder: (context) {
-                        // Filter out categories with zero values for the pie chart
-                        final nonZeroData = dashboardState.chartData.entries
-                            .where((entry) => entry.value > 0)
-                            .toList();
+                  Center(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final isTablet = screenWidth > 600;
 
-                        if (nonZeroData.isEmpty) {
-                          return const Center(
-                            child: Text('No expense data to show'),
-                          );
-                        }
+                        // Responsive chart height and sizing
+                        final chartHeight = isTablet ? 500.0 : 350.0;
+                        final maxChartWidth = isTablet
+                            ? 600.0
+                            : double.infinity;
 
-                        return PieChart(
-                          PieChartData(
-                            sections: nonZeroData.asMap().entries.map((
-                              mapEntry,
-                            ) {
-                              final entry = mapEntry.value;
-                              final categoryName = entry.key;
+                        return Container(
+                          height: chartHeight,
+                          constraints: BoxConstraints(maxWidth: maxChartWidth),
+                          child: Center(
+                            child: Builder(
+                              builder: (context) {
+                                // Filter out categories with zero values for the pie chart
+                                final nonZeroData = dashboardState
+                                    .chartData
+                                    .entries
+                                    .where((entry) => entry.value > 0)
+                                    .toList();
 
-                              // Get or generate a color for this category
-                              Color categoryColor =
-                                  _categoryColors[categoryName] ??=
-                                      _generateRandomColor();
+                                if (nonZeroData.isEmpty) {
+                                  return const Center(
+                                    child: Text('No expense data to show'),
+                                  );
+                                }
 
-                              return PieChartSectionData(
-                                value: entry.value,
-                                color: categoryColor,
-                                title: '\$${entry.value.toStringAsFixed(0)}',
-                                radius: MediaQuery.of(context).size.width / 6.4,
-                              );
-                            }).toList(),
-                            centerSpaceRadius: 50,
-                            sectionsSpace: 2,
-                            pieTouchData: PieTouchData(
-                              touchCallback:
-                                  (
-                                    FlTouchEvent event,
-                                    PieTouchResponse? response,
-                                  ) {
-                                    if (DateTime.now()
-                                                .difference(_lastTap)
-                                                .inMilliseconds >
-                                            300 &&
-                                        response != null &&
-                                        response.touchedSection != null) {
-                                      _lastTap = DateTime.now();
-                                      int touchedIndex = response
-                                          .touchedSection!
-                                          .touchedSectionIndex;
+                                // Calculate responsive radius based on available space
+                                final availableWidth = isTablet
+                                    ? 600.0
+                                    : screenWidth - 32;
+                                final radius = isTablet
+                                    ? (availableWidth / 4.5).clamp(120.0, 180.0)
+                                    : (availableWidth / 6).clamp(80.0, 140.0);
+                                final centerSpace = (radius * 0.35).clamp(
+                                  40.0,
+                                  70.0,
+                                );
 
-                                      // Get the correct category and value from filtered data
-                                      if (touchedIndex < nonZeroData.length) {
-                                        final touchedEntry =
-                                            nonZeroData[touchedIndex];
-                                        String category = touchedEntry.key;
-                                        double value = touchedEntry.value;
+                                return PieChart(
+                                  PieChartData(
+                                    sections: nonZeroData.asMap().entries.map((
+                                      mapEntry,
+                                    ) {
+                                      final entry = mapEntry.value;
+                                      final categoryName = entry.key;
 
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: Text(category.toUpperCase()),
-                                            content: Text(
-                                              'Amount: \$${value.toStringAsFixed(2)}',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.of(context).pop(),
-                                                child: const Text('Close'),
+                                      // Get or generate a color for this category
+                                      Color categoryColor =
+                                          _categoryColors[categoryName] ??=
+                                              _generateRandomColor();
+
+                                      return PieChartSectionData(
+                                        value: entry.value,
+                                        color: categoryColor,
+                                        title:
+                                            '\$${entry.value.toStringAsFixed(0)}',
+                                        radius: radius,
+                                        titleStyle: TextStyle(
+                                          fontSize: isTablet ? 16 : 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          shadows: [
+                                            Shadow(
+                                              offset: const Offset(1, 1),
+                                              color: Colors.black.withOpacity(
+                                                0.7,
                                               ),
-                                            ],
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
+                                              blurRadius: 2,
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                    centerSpaceRadius: centerSpace,
+                                    sectionsSpace: 2,
+                                    pieTouchData: PieTouchData(
+                                      touchCallback:
+                                          (
+                                            FlTouchEvent event,
+                                            PieTouchResponse? response,
+                                          ) {
+                                            if (DateTime.now()
+                                                        .difference(_lastTap)
+                                                        .inMilliseconds >
+                                                    300 &&
+                                                response != null &&
+                                                response.touchedSection !=
+                                                    null) {
+                                              _lastTap = DateTime.now();
+                                              int touchedIndex = response
+                                                  .touchedSection!
+                                                  .touchedSectionIndex;
+
+                                              // Get the correct category and value from filtered data
+                                              if (touchedIndex <
+                                                  nonZeroData.length) {
+                                                final touchedEntry =
+                                                    nonZeroData[touchedIndex];
+                                                String category =
+                                                    touchedEntry.key;
+                                                double value =
+                                                    touchedEntry.value;
+
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => AlertDialog(
+                                                    title: Text(
+                                                      category.toUpperCase(),
+                                                    ),
+                                                    content: Text(
+                                                      'Amount: \$${value.toStringAsFixed(2)}',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Navigator.of(
+                                                              context,
+                                                            ).pop(),
+                                                        child: const Text(
+                                                          'Close',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          },
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         );
@@ -808,6 +846,58 @@ class DashboardPageState extends ConsumerState<DashboardPage>
       builder: (BuildContext context) {
         return const SiriShortcutSetupDialog();
       },
+    );
+  }
+
+  Widget _buildTotalExpenseTodayCard(dynamic dashboardState) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 45),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            TextWidgets.mainSemiBold(
+              title: 'Total Expense Today',
+              textAlign: TextAlign.center,
+              fontSize: 18,
+            ),
+            TextWidgets.mainBold(
+              title: dashboardState.expenses.isEmpty
+                  ? '\$0.00'
+                  : '\$${dashboardState.totalExpenseToday.toStringAsFixed(2)}',
+              fontSize: 24,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalExpenseMonthCard(dynamic dashboardState) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 45),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            TextWidgets.mainSemiBold(
+              title: 'Total expense this month',
+              textAlign: TextAlign.center,
+              fontSize: 18,
+            ),
+            TextWidgets.mainBold(
+              title: dashboardState.expenses.isEmpty
+                  ? '\$0.00'
+                  : '\$${dashboardState.totalExpenseMonth.toStringAsFixed(2)}',
+              fontSize: 24,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
