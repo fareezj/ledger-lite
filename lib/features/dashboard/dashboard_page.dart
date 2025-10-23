@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,13 +32,20 @@ class DashboardPageState extends ConsumerState<DashboardPage>
   int currentYear = DateTime.now().year;
   DateTime _lastTap = DateTime(0);
 
-  final colorList = <Color>[
-    const Color(0xfffdcb6e),
-    const Color(0xff0984e3),
-    const Color(0xfffd79a8),
-    const Color(0xffe17055),
-    const Color(0xff6c5ce7),
-  ];
+  // Generate random colors for categories with better saturation and brightness
+  Color _generateRandomColor() {
+    final Random random = Random();
+
+    // Generate colors with higher saturation and appropriate brightness for better visibility
+    final hue = random.nextDouble() * 360;
+    final saturation = 0.6 + random.nextDouble() * 0.4; // 60-100% saturation
+    final lightness = 0.4 + random.nextDouble() * 0.3; // 40-70% lightness
+
+    return HSLColor.fromAHSL(1.0, hue, saturation, lightness).toColor();
+  }
+
+  // Cache colors for categories to maintain consistency
+  final Map<String, Color> _categoryColors = {};
 
   @override
   void initState() {
@@ -305,16 +313,16 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                               mapEntry,
                             ) {
                               final entry = mapEntry.value;
-                              final originalIndex = dashboardState
-                                  .chartData
-                                  .keys
-                                  .toList()
-                                  .indexOf(entry.key);
+                              final categoryName = entry.key;
+
+                              // Get or generate a color for this category
+                              Color categoryColor =
+                                  _categoryColors[categoryName] ??=
+                                      _generateRandomColor();
 
                               return PieChartSectionData(
                                 value: entry.value,
-                                color:
-                                    colorList[originalIndex % colorList.length],
+                                color: categoryColor,
                                 title: '\$${entry.value.toStringAsFixed(0)}',
                                 radius: MediaQuery.of(context).size.width / 6.4,
                               );
