@@ -54,6 +54,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     return MaterialApp(
       title: 'ledgerlite',
       onGenerateRoute: RouteGenerator.generateRoute,
+      debugShowCheckedModeBanner: false,
       color: Color(0xFFF9F6F1),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),

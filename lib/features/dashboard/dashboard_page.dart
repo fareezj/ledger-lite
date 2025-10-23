@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -137,11 +138,12 @@ class DashboardPageState extends ConsumerState<DashboardPage>
         backgroundColor: Color(0xFFF9F6F1),
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => _showSiriSettingsDialog(context),
-            tooltip: 'Siri Shortcuts Settings',
-          ),
+          if (Platform.isIOS)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => _showSiriSettingsDialog(context),
+              tooltip: 'Siri Shortcuts Settings',
+            ),
         ],
       ),
       body: SafeArea(
@@ -518,26 +520,27 @@ class DashboardPageState extends ConsumerState<DashboardPage>
                   ],
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.mic_outlined,
-                      color: Colors.blue.shade600,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Use Siri shortcuts for quick expense logging',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue.shade700,
-                          fontWeight: FontWeight.w500,
+                if (Platform.isIOS)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.mic_outlined,
+                        color: Colors.blue.shade600,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Use Siri shortcuts for quick expense logging',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.blue.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
